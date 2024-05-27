@@ -18,8 +18,13 @@ class _AddTodoPageState extends State<AddTodoPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.todo != null) {
+    final todo = widget.todo;
+    if (todo != null) {
       isEdit = true;
+      final title = todo['title'];
+      final description = todo['description'];
+      titleController.text = title;
+      descriptionController.text = description;
     }
   }
 
@@ -48,10 +53,46 @@ class _AddTodoPageState extends State<AddTodoPage> {
           SizedBox(
             height: 20,
           ),
-          ElevatedButton(onPressed: submitData, child: Text('Submit'))
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+                onPressed: isEdit ? updateData : submitData,
+                child: Text(isEdit ? 'Update' : 'Submit')),
+          )
         ],
       ),
     );
+  }
+
+  Future<void> updateData() async {
+    // get the data from form
+    final todo = widget.todo;
+    if (todo == null) {
+      print('You can call without todo data');
+      return;
+    }
+    final id = todo['_id'];
+    final title = titleController.text;
+    final description = descriptionController.text;
+    final body = {
+      "title": title,
+      "description": description,
+      "is_completed": false
+    };
+    // update  data to the server
+    final url = 'https://api.nstack.in/v1/todos/$id';
+    final uri = Uri.parse(url);
+    final response = await http.put(uri,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body));
+    // show succes or fail message base on the status
+    if (response.statusCode == 200) {
+      showSuccessMessage("update success");
+    } else {
+      showErrorMessage("update failed");
+    }
   }
 
   Future<void> submitData() async {
